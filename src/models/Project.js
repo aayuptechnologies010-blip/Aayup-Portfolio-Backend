@@ -2,21 +2,16 @@ const mongoose = require("mongoose");
 
 const ProjectSchema = new mongoose.Schema(
   {
-    title: { type: String, required: true },
-    tagline: { type: String, default: "" },
+    title: { type: String, required: true }, // Project Name
     category: {
       type: String,
-      enum: ["Web Platforms", "Mobile Apps", "CRM / ERP", "AI & Automation"],
+      enum: ["Web Platforms", "Mobile Apps", "CRM / ERP", "AI & Automation", "Our Products"],
       required: true,
-    },
-    image: { type: String, required: true },
-    description: { type: String, required: true },
-    problem: { type: String, default: "" },
-    solution: { type: String, default: "" },
-    keyFeatures: [{ type: String }],
-    techStack: [{ type: String }],
-    metrics: { type: String, default: "" },
-    duration: { type: String, default: "" },
+    }, // Categories
+    liveLink: { type: String, default: "" }, // Live Link
+    image: { type: String, required: true }, // Thumbnail (Base64)
+    isProduct: { type: Boolean, default: false }, // Optional toggle: Is this one of Our Products?
+    description: { type: String, default: "" },
     isPublished: { type: Boolean, default: true },
   },
   { timestamps: true }

@@ -1,35 +1,21 @@
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
 const authMiddleware = require("../middleware/auth");
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const dir = path.join(__dirname, "../../uploads");
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    cb(null, dir);
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  },
-});
+// Use Memory Storage so file is buffered in RAM and converted to base64
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
   fileFilter: (req, file, cb) => {
     const allowed = /jpeg|jpg|png|webp|svg/;
-    const ext = allowed.test(path.extname(file.originalname).toLowerCase());
     const mime = allowed.test(file.mimetype);
-    if (ext && mime) {
+    if (mime) {
       cb(null, true);
     } else {
-      cb(new Error("Only images (.jpg, .png, .webp, .svg) are allowed."));
+      cb(new Error("Only image files (.jpg, .png, .webp, .svg) are allowed."));
     }
   },
 });
@@ -39,8 +25,17 @@ router.post("/", authMiddleware, upload.single("file"), (req, res) => {
     if (!req.file) {
       return res.status(400).json({ success: false, message: "No file uploaded." });
     }
-    const fileUrl = `/uploads/${req.file.filename}`;
-    res.json({ success: true, url: fileUrl });
+
+    // Convert Buffer directly to base64 Data URI
+    const mimeType = req.file.mimetype;
+    const base64Data = req.file.buffer.toString("base64");
+    const dataUri = `data:${mimeType};base64,${base64Data}`;
+
+    res.json({
+      success: true,
+      url: dataUri,
+      message: "Image successfully encoded to Base64!",
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
